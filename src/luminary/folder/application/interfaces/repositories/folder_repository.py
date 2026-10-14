@@ -18,6 +18,9 @@ class IFolderRepository(ABC):
     async def save(self, entity: Folder) -> None: ...
 
     @abstractmethod
+    async def move_chat_association(self, chat_id: ChatId) -> None: ...
+
+    @abstractmethod
     async def clear_assistant_reference(self, assistant_id: AssistantId) -> None: ...
 
     @abstractmethod

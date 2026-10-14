@@ -37,6 +37,10 @@ class EventBusFolderRepository(IFolderRepository):
             await self.repository.save(entity)
             await self.event_bus.publish_all(entity.events)
 
+    async def move_chat_association(self, chat_id: ChatId) -> None:
+        async with self.uow:
+            await self.repository.move_chat_association(chat_id)
+
     async def clear_assistant_reference(self, assistant_id: AssistantId) -> None:
         await self.repository.clear_assistant_reference(assistant_id)
 

@@ -16,6 +16,10 @@ from luminary.chat.infrastructure.database.postgres.sqlalchemy.models.chat_base 
     ChatBase,
     ChatSourceAssociation,
 )
+from luminary.folder.domain.value_objects.folder_id import FolderId
+from luminary.folder.infrastructure.database.postgres.sqlalchemy.models.folder_base import (
+    FolderBase,
+)
 from luminary.source.domain.entity.source import SourceId
 
 
@@ -43,6 +47,21 @@ class ChatRepository(IChatRepository):
     async def save(self, entity: Chat) -> None:
         base = ChatMapper.to_persistence(entity)
         await self.executor.save(base)
+
+    async def delete_by_folder(self, folder_id: FolderId) -> None:
+        async with self.executor.uow:
+            folder = await self.executor.execute_scalar_one(
+                select(FolderBase)
+                .where(FolderBase.folder_id == folder_id.value)
+                .with_for_update()
+            )
+            if folder is None or not folder.is_deleted:
+                return
+            await self.executor.execute(
+                update(ChatBase)
+                .where(ChatBase.folder_id == folder_id.value, ChatBase.is_active)
+                .values(is_deleted=True)
+            )
 
     async def clear_assistant_reference(self, assistant_id: AssistantId) -> None:
         stmt = (
